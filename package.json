@@ -1,19 +1,13 @@
 {
   "name": "webhook-airtable",
   "version": "1.0.0",
-  "description": "Webhook que atualiza status de pagamento no Airtable com fila e retry",
+  "description": "Webhook que atualiza status de pagamento no Airtable",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js"
   },
-  "keywords": [
-    "webhook",
-    "airtable",
-    "express",
-    "fila",
-    "retry"
-  ],
+  "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
