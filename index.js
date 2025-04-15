@@ -5,21 +5,23 @@ const axios = require('axios');
 const PQueue = require('p-queue');
 
 const app = express();
+app.use(bodyParser.json());
+
+// Configura a fila com limite de 5 requisições por segundo
 const queue = new PQueue({
-  concurrency: 1,       // Só 1 requisição por vez
-  interval: 1000,       // Intervalo de tempo (1s)
-  intervalCap: 5        // Até 5 requisições por segundo
+  concurrency: 1,
+  interval: 1000,
+  intervalCap: 5
 });
 
+// Variáveis de ambiente
 const PORT = process.env.PORT || 3000;
 const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY;
 const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID;
 const AIRTABLE_TABLE_NAME = process.env.AIRTABLE_TABLE_NAME;
 
-app.use(bodyParser.json());
-
+// Endpoint do webhook
 app.post('/webhook', (req, res) => {
-  // Enfileira a execução do webhook
   queue.add(() => handleWebhook(req.body))
     .then(() => {
       res.status(200).send('Webhook enfileirado e processado.');
@@ -30,9 +32,24 @@ app.post('/webhook', (req, res) => {
     });
 });
 
+// Função de retry com backoff
+async function retryAsync(fn, retries = 3, delay = 1000) {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      const isLast = attempt === retries;
+      console.warn(`Tentativa ${attempt} falhou: ${error.message}`);
+      if (isLast) throw error;
+      await new Promise(res => setTimeout(res, delay * attempt)); // espera progressiva
+    }
+  }
+}
+
+// Lógica do webhook
 async function handleWebhook(data) {
-  const paymentUrl = data.data.checkouts?.[0]?.payment_url;
-  const statusPagamento = data.data.status;
+  const paymentUrl = data?.data?.checkouts?.[0]?.payment_url;
+  const statusPagamento = data?.data?.status;
 
   if (!paymentUrl || !statusPagamento) {
     console.warn('payment_url ou status não encontrado no payload.');
@@ -53,11 +70,11 @@ async function handleWebhook(data) {
 
   const searchUrl = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_TABLE_NAME}?filterByFormula={Checkout}="${paymentUrl}"`;
 
-  const searchResponse = await axios.get(searchUrl, {
+  const searchResponse = await retryAsync(() => axios.get(searchUrl, {
     headers: {
       Authorization: `Bearer ${AIRTABLE_API_KEY}`
     }
-  });
+  }));
 
   const records = searchResponse.data.records;
 
@@ -70,7 +87,7 @@ async function handleWebhook(data) {
 
   console.log(`✅ Atualizando registro ${recordId} com Pagamento: Confirmado`);
 
-  await axios.patch(
+  await retryAsync(() => axios.patch(
     `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_TABLE_NAME}/${recordId}`,
     {
       fields: {
@@ -84,9 +101,12 @@ async function handleWebhook(data) {
         'Content-Type': 'application/json'
       }
     }
-  );
+  ));
+
+  console.log(`🎉 Registro ${recordId} atualizado com sucesso.`);
 }
 
+// Inicia o servidor
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
