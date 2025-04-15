@@ -15,18 +15,18 @@ app.use(bodyParser.json());
 app.post('/webhook', async (req, res) => {
   try {
     const data = req.body;
-    const checkoutId = data.data.checkouts?.[0]?.id;
+    const paymentUrl = data.data.checkouts?.[0]?.payment_url;
     const statusPagamento = data.data.status;
-
-    if (!checkoutId || !statusPagamento) {
-      console.warn('Checkout ID ou status não encontrado no payload.');
+    
+    if (!paymentUrl || !statusPagamento) {
+      console.warn('payment_url ou status não encontrado no payload.');
       return res.status(200).send('Dados incompletos, mas webhook recebido.');
     }
+    
+    console.log(`Procurando por payment_url: ${paymentUrl}`);
+    
+    const searchUrl = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_TABLE_NAME}?filterByFormula={payment_url}="${paymentUrl}"`;
 
-    console.log(`Procurando por checkout: ${checkoutId}`);
-
-    // Busca no Airtable
-    const searchUrl = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_TABLE_NAME}?filterByFormula={checkout}="${checkoutId}"`;
 
     const searchResponse = await axios.get(searchUrl, {
       headers: {
