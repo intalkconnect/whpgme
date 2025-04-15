@@ -48,7 +48,7 @@ app.post('/webhook', async (req, res) => {
       `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_TABLE_NAME}/${recordId}`,
       {
         fields: {
-          pagamento: statusPagamento
+          Pagamento: statusPagamento
         }
       },
       {
