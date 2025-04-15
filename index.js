@@ -25,7 +25,7 @@ app.post('/webhook', async (req, res) => {
     
     console.log(`Procurando por payment_url: ${paymentUrl}`);
     
-    const searchUrl = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_TABLE_NAME}?filterByFormula={payment_url}="${paymentUrl}"`;
+    const searchUrl = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_TABLE_NAME}?filterByFormula={Checkout}="${paymentUrl}"`;
 
 
     const searchResponse = await axios.get(searchUrl, {
