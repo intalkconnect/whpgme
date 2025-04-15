@@ -37,7 +37,7 @@ app.post('/webhook', async (req, res) => {
     const records = searchResponse.data.records;
 
     if (records.length === 0) {
-      console.log(`Nenhum registro encontrado com checkout ${checkoutId}`);
+      console.log(`Nenhum registro encontrado com checkout ${paymentUrl}`);
       return res.status(200).send('Registro não encontrado, mas webhook recebido.');
     }
 
