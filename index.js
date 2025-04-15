@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const axios = require('axios');
-const PQueue = require('p-queue');
+const { default: PQueue } = require('p-queue');
 
 const app = express();
 app.use(bodyParser.json());
