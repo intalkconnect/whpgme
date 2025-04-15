@@ -49,7 +49,8 @@ app.post('/webhook', async (req, res) => {
       {
         fields: {
           Pagamento: statusPagamento
-        }
+        },
+        typecast: true
       },
       {
         headers: {
